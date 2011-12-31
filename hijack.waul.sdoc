@@ -1,0 +1,45 @@
+Hijack | Spencer Tipping
+Licensed under the terms of the MIT source code license
+
+Introduction.
+This hijack's Caterwaul's Javascript parser by recompiling it with a separate set of lex and parse tables. It requires intimate knowledge of Caterwaul's parsing mechanics, which are highly
+irregular and not very well-suited even to Javascript.
+
+caterwaul.module('hijack', 'js_all', function ($) {
+  $.hijack(options) = {parse:     $.compile($.parse /!$.parse, bindings),
+                       serialize: $.compile($.javascript_tree_serialization_methods.serialize /!$.parse, bindings)} -where [bindings = bindings_for(options)]
+
+  -where [lex_table(cs)      = n[255] *[cs.indexOf(x) ? true : false] -seq,
+          hash(xs)           = xs *[[x, true]] /object -seq,
+
+          default_tables     = capture [lex_float = '.0123456789', lex_decimal = '0123456789', lex_integer = '0123456789abcdefABCDEFx', lex_exp = 'eE',
+                                        lex_space = ' \n\t\r',     lex_bracket = '()[]{}?:',   lex_opener  = '([{?:',                 lex_punct = '+-*/%&|^!~=<>?:;.,',
+                                        lex_eol   = '\n\r',  lex_regexp_suffix = 'gims',       lex_quote   = '\'"/',
+                                        lex_ident = '$_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'],
+
+          default_codes      = capture [lex_slash = '/', lex_zero = '0', lex_star = '*', lex_back = '\\', lex_x = 'x', lex_dot = '.', lex_hash = '#'],
+
+          operators(options) = wcapture [lex_op                 = options.precedence *~![x.split(/\s+/)] -seq -re- hash(it),
+
+                                         parse_reduce_order     = options.precedence *[x.split(/\s+/) /!hash] -seq,
+                                         parse_associates_right = options.right.split(/\s+/) /!hash,
+                                         parse_lr               = options.binary.split(/\s+/) /!hash,
+                                         parse_r                = options.prefix          || 'u+ u- u! u~ u++ u-- new typeof finally case var const void delete'.qw /!hash,
+                                         parse_l                = options.postfix         || '-- ++'.qw /!hash,
+
+                                         parse_index_forward    = parse_reduce_order *[!parse_associates_right.hasOwnProperty(x /keys -seq -re- it[0])] -seq,
+                                         parse_inverse_order    = parse_reduce_order /pairs *[[x[1], x[0]]] /object %v*[+x] -seq,
+
+                                         parse_accepts          = options.accepts         || 'if else do while catch finally try catch'.qh,
+                                         parse_r_until_block    = options.blocks          || 'function 2 if 1 do 1 catch 1 try 1 for 1 while 1 with 1 switch 1'.qh %v*[+x] -seq,
+                                         parse_invocation       = options.invocation      || '() []'.qw /!hash,
+                                         parse_r_optional       = options.r_optional      || 'return throw break continue else'.qw /!hash,
+                                         parse_group            = options.group           || '( ) [ ] { } ? :'.qh,
+                                         parse_ambiguous_group  = options.ambiguous_group || '( ['.qw /!hash,
+                                         parse_block            = options.block           || '; {'.qw /!hash,
+                                         parse_ternary          = options.ternary         || '?'.qw /!hash,
+                                         parse_not_a_value      = options.not_a_value     || 'function if for while catch void delete new typeof in instanceof'.qw /!hash,
+                                         parse_also_expression  = options.also_expression || 'function'.qw /!hash],
+
+          bindings_for(options) = $.merge({}, $.merge({}, default_tables, options.tables) %v*lex_table -seq,
+                                              $.merge({}, default_codes,  options.codes)  %v*[x.charCodeAt(0)] -seq, operators(options))]});
