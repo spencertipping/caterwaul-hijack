@@ -24,22 +24,23 @@ caterwaul.module('hijack', 'js_all', function ($) {
                                          parse_reduce_order     = options.precedence *[x.split(/\s+/) /!hash] -seq,
                                          parse_associates_right = options.right.split(/\s+/) /!hash,
                                          parse_lr               = options.binary.split(/\s+/) /!hash,
-                                         parse_r                = options.prefix          || 'u+ u- u! u~ u++ u-- new typeof finally case var const void delete'.qw /!hash,
-                                         parse_l                = options.postfix         || '-- ++'.qw /!hash,
+
+                                         parse_r                = hash(options.prefix          || 'u+ u- u! u~ u++ u-- new typeof finally case var const void delete'.qw)
+                                         parse_l                = hash(options.postfix         || '-- ++'.qw),
+                                         parse_invocation       = hash(options.invocation      || '() []'.qw),
+                                         parse_r_optional       = hash(options.r_optional      || 'return throw break continue else'.qw),
+                                         parse_ambiguous_group  = hash(options.ambiguous_group || '( ['.qw),
+                                         parse_block            = hash(options.block           || '; {'.qw),
+                                         parse_ternary          = hash(options.ternary         || '?'.qw),
+                                         parse_not_a_value      = hash(options.not_a_value     || 'function if for while catch void delete new typeof in instanceof'.qw),
+                                         parse_also_expression  = hash(options.also_expression || 'function'.qw),
 
                                          parse_index_forward    = parse_reduce_order *[!parse_associates_right.hasOwnProperty(x /keys -seq -re- it[0])] -seq,
                                          parse_inverse_order    = parse_reduce_order /pairs *[[x[1], x[0]]] /object %v*[+x] -seq,
 
-                                         parse_accepts          = options.accepts         || 'if else do while catch finally try catch'.qh,
-                                         parse_r_until_block    = options.blocks          || 'function 2 if 1 do 1 catch 1 try 1 for 1 while 1 with 1 switch 1'.qh %v*[+x] -seq,
-                                         parse_invocation       = options.invocation      || '() []'.qw /!hash,
-                                         parse_r_optional       = options.r_optional      || 'return throw break continue else'.qw /!hash,
-                                         parse_group            = options.group           || '( ) [ ] { } ? :'.qh,
-                                         parse_ambiguous_group  = options.ambiguous_group || '( ['.qw /!hash,
-                                         parse_block            = options.block           || '; {'.qw /!hash,
-                                         parse_ternary          = options.ternary         || '?'.qw /!hash,
-                                         parse_not_a_value      = options.not_a_value     || 'function if for while catch void delete new typeof in instanceof'.qw /!hash,
-                                         parse_also_expression  = options.also_expression || 'function'.qw /!hash],
+                                         parse_accepts          = options.accepts              || 'if else do while catch finally try catch'.qh,
+                                         parse_r_until_block    = options.blocks               || 'function 2 if 1 do 1 catch 1 try 1 for 1 while 1 with 1 switch 1'.qh %v*[+x] -seq,
+                                         parse_group            = options.group                || '( ) [ ] { } ? :'.qh],
 
           bindings_for(options) = $.merge({}, $.merge({}, default_tables, options.tables) %v*lex_table -seq,
                                               $.merge({}, default_codes,  options.codes)  %v*[x.charCodeAt(0)] -seq, operators(options))]});
