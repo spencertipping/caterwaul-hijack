@@ -25,7 +25,7 @@ caterwaul.module('hijack', 'js_all', function ($) {
                                          parse_associates_right = options.right.split(/\s+/) /!hash,
                                          parse_lr               = options.binary.split(/\s+/) /!hash,
 
-                                         parse_r                = hash(options.prefix          || 'u+ u- u! u~ u++ u-- new typeof finally case var const void delete'.qw)
+                                         parse_r                = hash(options.prefix          || 'u+ u- u! u~ u++ u-- new typeof finally case var const void delete'.qw),
                                          parse_l                = hash(options.postfix         || '-- ++'.qw),
                                          parse_invocation       = hash(options.invocation      || '() []'.qw),
                                          parse_r_optional       = hash(options.r_optional      || 'return throw break continue else'.qw),
