@@ -5,11 +5,14 @@ Introduction.
 This hijack's Caterwaul's Javascript parser by recompiling it with a separate set of lex and parse tables. It requires intimate knowledge of Caterwaul's parsing mechanics, which are highly
 irregular and not very well-suited even to Javascript.
 
+Note that you must use an unminified version of Caterwaul if you want to hijack the parser. The reason is that Hijack doesn't try to undo the renaming that happens to local variables under
+minification, and most of the parser variables that need to be replaced are locals.
+
 caterwaul.module('hijack', 'js_all', function ($) {
   $.hijack(options) = {parse:     $.compile($.parse /!$.parse, bindings),
                        serialize: $.compile($.javascript_tree_serialization_methods.serialize /!$.parse, bindings)} -where [bindings = bindings_for(options)]
 
-  -where [lex_table(cs)      = n[255] *[cs.indexOf(x) ? true : false] -seq,
+  -where [lex_table(cs)      = n[255] *[codes.indexOf(x) !== -1] -seq -where [codes = cs.split('') *[x.charCodeAt(0)] -seq],
           hash(xs)           = xs *[[x, true]] /object -seq,
 
           default_tables     = capture [lex_float = '.0123456789', lex_decimal = '0123456789', lex_integer = '0123456789abcdefABCDEFx', lex_exp = 'eE',
@@ -27,6 +30,8 @@ caterwaul.module('hijack', 'js_all', function ($) {
 
                                          parse_r                = hash(options.prefix          || 'u+ u- u! u~ u++ u-- new typeof finally case var const void delete'.qw),
                                          parse_l                = hash(options.postfix         || '-- ++'.qw),
+                                         lex_postfix_unary      = parse_l,
+
                                          parse_invocation       = hash(options.invocation      || '() []'.qw),
                                          parse_r_optional       = hash(options.r_optional      || 'return throw break continue else'.qw),
                                          parse_ambiguous_group  = hash(options.ambiguous_group || '( ['.qw),
@@ -34,13 +39,15 @@ caterwaul.module('hijack', 'js_all', function ($) {
                                          parse_ternary          = hash(options.ternary         || '?'.qw),
                                          parse_not_a_value      = hash(options.not_a_value     || 'function if for while catch void delete new typeof in instanceof'.qw),
                                          parse_also_expression  = hash(options.also_expression || 'function'.qw),
+                                         parse_invisible        = hash(options.invisible       || 'i;'.qw),
 
                                          parse_index_forward    = parse_reduce_order *[!parse_associates_right.hasOwnProperty(x /keys -seq -re- it[0])] -seq,
-                                         parse_inverse_order    = parse_reduce_order /pairs *[[x[1], x[0]]] /object %v*[+x] -seq,
+                                         parse_inverse_order    = parse_reduce_order *~!~[x /keys *op[[op, xi]]] /object -seq,
 
                                          parse_accepts          = options.accepts              || 'if else do while catch finally try catch'.qh,
-                                         parse_r_until_block    = options.blocks               || 'function 2 if 1 do 1 catch 1 try 1 for 1 while 1 with 1 switch 1'.qh %v*[+x] -seq,
+                                         parse_r_until_block    = (options.blocks              || 'function 2 if 1 do 1 catch 1 try 1 for 1 while 1 with 1 switch 1'.qh) %v*[+x] -seq,
                                          parse_group            = options.group                || '( ) [ ] { } ? :'.qh],
 
-          bindings_for(options) = $.merge({}, $.merge({}, default_tables, options.tables) %v*lex_table -seq,
-                                              $.merge({}, default_codes,  options.codes)  %v*[x.charCodeAt(0)] -seq, operators(options))]});
+          bindings_for(options) = $.merge(capture [caterwaul_global = $, map = $.map, empty = $.empty, has(o, k) = Object.prototype.hasOwnProperty.call(o, k)],
+                                          $.merge({}, default_tables, options.tables) %v*lex_table -seq,
+                                          $.merge({}, default_codes,  options.codes)  %v*[x.charCodeAt(0)] -seq, operators(options))]});
